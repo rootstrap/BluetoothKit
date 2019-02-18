@@ -160,15 +160,14 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
 
     /**
         Scan for peripherals for a limited duration of time.
-        - parameter duration: The number of seconds to scan for (defaults to 3). A duration of 0 means endless
-        - parameter updateDuplicates: normally, discoveries for the same peripheral are coalesced by IOS. Setting this to true advises the OS to generate new discoveries anyway. This allows you to react to RSSI changes (defaults to false).
+        - parameter duration: The number of seconds to scan for (defaults to 3).
         - parameter progressHandler: A progress handler allowing you to react immediately when a peripheral is discovered during a scan.
         - parameter completionHandler: A completion handler allowing you to react on the full result of discovered peripherals or an error if one occured.
     */
-    public func scanWithDuration(_ duration: TimeInterval = 3, updateDuplicates: Bool = false, progressHandler: ScanProgressHandler?, completionHandler: ScanCompletionHandler?) {
+    public func scanWithDuration(_ duration: TimeInterval = 3, progressHandler: ScanProgressHandler?, completionHandler: ScanCompletionHandler?) {
         do {
             try stateMachine.handleEvent(.scan)
-            try scanner.scanWithDuration(duration, updateDuplicates: updateDuplicates, progressHandler: progressHandler) { result, error in
+            try scanner.scanWithDuration(duration, progressHandler: progressHandler) { result, error in
                 var returnError: BKError?
                 if error == nil {
                     _ = try? self.stateMachine.handleEvent(.setAvailable)
@@ -187,13 +186,12 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
         Scan for peripherals for a limited duration of time continuously with an in-between delay.
         - parameter changeHandler: A change handler allowing you to react to changes in "maintained" discovered peripherals.
         - parameter stateHandler: A state handler allowing you to react when the scanner is started, waiting and stopped.
-        - parameter duration: The number of seconds to scan for (defaults to 3). A duration of 0 means endless and inBetweenDelay is pointless
+        - parameter duration: The number of seconds to scan for (defaults to 3).
         - parameter inBetweenDelay: The number of seconds to wait for, in-between scans (defaults to 3).
-        - parameter updateDuplicates: normally, discoveries for the same peripheral are coalesced by IOS. Setting this to true advises the OS to generate new discoveries anyway. This allows you to react to RSSI changes (defaults to false).
         - parameter errorHandler: An error handler allowing you to react when an error occurs. For now this is also called when the scan is manually interrupted.
     */
 
-    public func scanContinuouslyWithChangeHandler(_ changeHandler: @escaping ContinuousScanChangeHandler, stateHandler: ContinuousScanStateHandler?, duration: TimeInterval = 3, inBetweenDelay: TimeInterval = 3, updateDuplicates: Bool = false, errorHandler: ContinuousScanErrorHandler?) {
+    public func scanContinuouslyWithChangeHandler(_ changeHandler: @escaping ContinuousScanChangeHandler, stateHandler: ContinuousScanStateHandler?, duration: TimeInterval = 3, inBetweenDelay: TimeInterval = 3, errorHandler: ContinuousScanErrorHandler?) {
         do {
             try stateMachine.handleEvent(.scan)
             continuousScanner.scanContinuouslyWithChangeHandler(changeHandler, stateHandler: { newState in
@@ -201,7 +199,7 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
                     _ = try? self.stateMachine.handleEvent(.setAvailable)
                 }
                 stateHandler?(newState)
-            }, duration: duration, inBetweenDelay: inBetweenDelay, updateDuplicates: updateDuplicates, errorHandler: { error in
+            }, duration: duration, inBetweenDelay: inBetweenDelay, errorHandler: { error in
                 errorHandler?(.internalError(underlyingError: error))
             })
         } catch let error {
@@ -309,6 +307,27 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
         return nil
     }
 
+  /**
+      Retrieves an array of currently connected peripherals.
+      - return: empty array if no remotes found else list of peripherals
+   */
+    public func getConnectedDevices() -> [BKRemotePeripheral] {
+        if let centralManager = _centralManager {
+          let peripherals = centralManager.retrieveConnectedPeripherals(withServices: (configuration?.advertisedServicesUUIDs)!)
+          guard !peripherals.isEmpty else { return [] }
+
+          var remotePeripherals: [BKRemotePeripheral] = []
+
+          for peripheral in peripherals {
+            let remotePeripheral = BKRemotePeripheral(identifier: peripheral.identifier, peripheral: peripheral)
+            remotePeripheral.configuration = configuration
+            remotePeripherals.append(remotePeripheral)
+          }
+          return remotePeripherals
+        }
+        return []
+      }
+
     // MARK: Internal Functions
 
     internal func setUnavailable(_ cause: BKUnavailabilityCause, oldCause: BKUnavailabilityCause?) {
@@ -325,18 +344,17 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
         }
     }
 
-    internal override func sendData(_ data: Data, toRemotePeer remotePeer: BKRemotePeer) -> Bool {
+    internal override func sendData(_ data: Data, toRemotePeer remotePeer: BKRemotePeer, under service: CBUUID) -> Bool {
         guard let remotePeripheral = remotePeer as? BKRemotePeripheral,
                 let peripheral = remotePeripheral.peripheral,
-                let characteristic = remotePeripheral.characteristicData else {
+                let characteristicData = remotePeripheral.characteristicsData.filter({ $0.serviceUUID == service && !$0.isReadable}).first else {
             return false
         }
-        peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
+        peripheral.writeValue(data, for: characteristicData.characteristic, type: .withoutResponse)
         return true
     }
 
     // MARK: BKCBCentralManagerStateDelegate
-
 
     internal func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {

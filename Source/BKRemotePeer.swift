@@ -23,6 +23,7 @@
 //
 
 import Foundation
+import CoreBluetooth
 
 public protocol BKRemotePeerDelegate: class {
     /**
@@ -30,7 +31,7 @@ public protocol BKRemotePeerDelegate: class {
      - parameter remotePeripheral: The remote peripheral that sent the data.
      - parameter data: The data it sent.
      */
-    func remotePeer(_ remotePeer: BKRemotePeer, didSendArbitraryData data: Data)
+    func remotePeer(_ remotePeer: BKRemotePeer, didSendArbitraryData data: Data, from characteristic: CBUUID)
 }
 
 public func == (lhs: BKRemotePeer, rhs: BKRemotePeer) -> Bool {
@@ -55,19 +56,7 @@ public class BKRemotePeer: Equatable {
         return 20
     }
 
-    internal func handleReceivedData(_ receivedData: Data) {
-        if receivedData == configuration!.endOfDataMark {
-            if let finalData = data {
-                delegate?.remotePeer(self, didSendArbitraryData: finalData)
-            }
-            data = nil
-            return
-        }
-        if self.data != nil {
-            self.data?.append(receivedData)
-            return
-        }
-        self.data = receivedData
+    internal func handleReceivedData(_ receivedData: Data, from characteristic: CBUUID) {
+      delegate?.remotePeer(self, didSendArbitraryData: receivedData, from: characteristic)
     }
-
 }

@@ -23,6 +23,7 @@
 //
 
 import Foundation
+import CoreBluetooth
 
 internal func == (lhs: BKSendDataTask, rhs: BKSendDataTask) -> Bool {
     return lhs.destination == rhs.destination && lhs.data == rhs.data
@@ -35,6 +36,7 @@ internal class BKSendDataTask: Equatable {
     internal let data: Data
     internal let destination: BKRemotePeer
     internal let completionHandler: BKSendDataCompletionHandler?
+    internal let underService: CBUUID?
     internal var offset = 0
 
     internal var maximumPayloadLength: Int {
@@ -65,10 +67,11 @@ internal class BKSendDataTask: Equatable {
 
     // MARK: Initialization
 
-    internal init(data: Data, destination: BKRemotePeer, completionHandler: BKSendDataCompletionHandler?) {
+  internal init(data: Data, destination: BKRemotePeer, completionHandler: BKSendDataCompletionHandler?, underService: CBUUID) {
         self.data = data
         self.destination = destination
         self.completionHandler = completionHandler
+        self.underService = underService
     }
 
 }

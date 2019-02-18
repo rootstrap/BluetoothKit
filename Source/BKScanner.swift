@@ -50,16 +50,14 @@ internal class BKScanner: BKCBCentralManagerDiscoveryDelegate {
 
     // MARK: Internal Functions
 
-    internal func scanWithDuration(_ duration: TimeInterval, updateDuplicates: Bool, progressHandler: BKCentral.ScanProgressHandler? = nil, completionHandler: @escaping ScanCompletionHandler) throws {
+    internal func scanWithDuration(_ duration: TimeInterval, progressHandler: BKCentral.ScanProgressHandler? = nil, completionHandler: @escaping ScanCompletionHandler) throws {
         do {
             try validateForActivity()
             busy = true
-            scanHandlers = ( progressHandler: progressHandler, completionHandler: completionHandler)
-            let options = [CBCentralManagerScanOptionAllowDuplicatesKey: updateDuplicates]
-            centralManager.scanForPeripherals(withServices: configuration.serviceUUIDs, options: options)
-            if(duration > 0) {
-                durationTimer = Timer.scheduledTimer(timeInterval: duration, target: self, selector: #selector(BKScanner.durationTimerElapsed), userInfo: nil, repeats: false)
-            }
+            scanHandlers = (progressHandler: progressHandler, completionHandler: completionHandler)
+
+            centralManager.scanForPeripherals(withServices: configuration.advertisedServicesUUIDs, options: nil)
+            durationTimer = Timer.scheduledTimer(timeInterval: duration, target: self, selector: #selector(BKScanner.durationTimerElapsed), userInfo: nil, repeats: false)
         } catch let error {
             throw error
         }
@@ -107,7 +105,7 @@ internal class BKScanner: BKCBCentralManagerDiscoveryDelegate {
 
     // MARK: BKCBCentralManagerDiscoveryDelegate
 
-    internal func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+    internal func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard busy else {
             return
         }
@@ -115,13 +113,10 @@ internal class BKScanner: BKCBCentralManagerDiscoveryDelegate {
         let remotePeripheral = BKRemotePeripheral(identifier: peripheral.identifier, peripheral: peripheral)
         remotePeripheral.configuration = configuration
         let discovery = BKDiscovery(advertisementData: advertisementData, remotePeripheral: remotePeripheral, RSSI: RSSI)
-        if let index = discoveries.index(of: discovery) {
-            discoveries[index] = discovery
-        }
-        else {
+        if !discoveries.contains(discovery) {
             discoveries.append(discovery)
+            scanHandlers?.progressHandler?([ discovery ])
         }
-        scanHandlers?.progressHandler?([ discovery ])
     }
 
 }

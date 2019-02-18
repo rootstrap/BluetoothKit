@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		86321F00221C7A4200A2D6FD /* BKService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86321EFE221C7A4100A2D6FD /* BKService.swift */; };
+		86321F01221C7A4200A2D6FD /* BKCharacteristic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86321EFF221C7A4200A2D6FD /* BKCharacteristic.swift */; };
 		91575CE01DBAA7B800445F38 /* CBLegacyManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91575CDF1DBAA7B800445F38 /* CBLegacyManagerState.swift */; };
 		91575CE11DBAA7B800445F38 /* CBLegacyManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91575CDF1DBAA7B800445F38 /* CBLegacyManagerState.swift */; };
 		91575CE21DBAA7B800445F38 /* CBLegacyManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91575CDF1DBAA7B800445F38 /* CBLegacyManagerState.swift */; };
@@ -77,6 +79,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		86321EFE221C7A4100A2D6FD /* BKService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BKService.swift; sourceTree = "<group>"; };
+		86321EFF221C7A4200A2D6FD /* BKCharacteristic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BKCharacteristic.swift; sourceTree = "<group>"; };
 		91575CDF1DBAA7B800445F38 /* CBLegacyManagerState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CBLegacyManagerState.swift; sourceTree = "<group>"; };
 		C64CDDF31BE4C46A00F72549 /* BluetoothKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BluetoothKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C66888AC1B978181003C8DBB /* BKDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BKDiscovery.swift; sourceTree = "<group>"; };
@@ -163,6 +167,8 @@
 		C687E3A51B8B4A2800B702D8 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				86321EFF221C7A4200A2D6FD /* BKCharacteristic.swift */,
+				86321EFE221C7A4100A2D6FD /* BKService.swift */,
 				C67A22721B8C80C300CB74CE /* BKAvailability.swift */,
 				C687E3A61B8B4A2800B702D8 /* BKCBCentralManagerDelegateProxy.swift */,
 				C687E3A71B8B4A2800B702D8 /* BKCBPeripheralDelegateProxy.swift */,
@@ -417,8 +423,10 @@
 				C67A22751B8C83D900CB74CE /* BKPeripheralStateMachine.swift in Sources */,
 				91575CE01DBAA7B800445F38 /* CBLegacyManagerState.swift in Sources */,
 				C687E3B81B8B4A2800B702D8 /* BKRemotePeripheral.swift in Sources */,
+				86321F01221C7A4200A2D6FD /* BKCharacteristic.swift in Sources */,
 				C67A22361B8C49CC00CB74CE /* BKConnectionAttempt.swift in Sources */,
 				C6BFB2941B959C8800AB5CAE /* BKContinuousScanner.swift in Sources */,
+				86321F00221C7A4200A2D6FD /* BKService.swift in Sources */,
 				C66888AD1B978181003C8DBB /* BKDiscovery.swift in Sources */,
 				C687E3B21B8B4A2800B702D8 /* BKCBCentralManagerDelegateProxy.swift in Sources */,
 				C66888B11B984AB7003C8DBB /* BKPeripheralConfiguration.swift in Sources */,
