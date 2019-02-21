@@ -67,8 +67,6 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         #endif
     }
 
-
-
     /// The configuration that the BKPeripheral object was started with.
     override public var configuration: BKPeripheralConfiguration? {
         return _configuration
@@ -163,13 +161,24 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         for availabilityObserver in availabilityObservers {
             availabilityObserver.availabilityObserver?.availabilityObserver(self, availabilityDidChange: .available)
         }
+
         if !peripheralManager.isAdvertising {
-            dataService = CBMutableService(type: _configuration.dataServiceUUID, primary: true)
-            let properties: CBCharacteristicProperties = [ .read, .notify, .writeWithoutResponse, .write ]
-            let permissions: CBAttributePermissions = [ .readable, .writeable ]
-            characteristicData = CBMutableCharacteristic(type: _configuration.dataServiceCharacteristicUUID, properties: properties, value: nil, permissions: permissions)
-            dataService.characteristics = [ characteristicData ]
-            peripheralManager.add(dataService)
+            var characteristicsData: [CBMutableCharacteristic] = []
+            for service in _configuration.services {
+                dataService = CBMutableService(type: service.serviceCBUUID, primary: true)
+                let properties: CBCharacteristicProperties = [.read, .notify, .writeWithoutResponse, .write]
+                let permissions: CBAttributePermissions = [.readable, .writeable]
+
+                for characteristic in service.allCharacteristics {
+                    characteristicsData.append(CBMutableCharacteristic(type: characteristic,
+                                                                       properties: properties,
+                                                                       value: nil,
+                                                                       permissions: permissions))
+                }
+
+                dataService.characteristics = characteristicsData
+                peripheralManager.add(dataService)
+            }
         }
     }
 
@@ -224,14 +233,13 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         }
     }
 
-
     internal func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
 
     }
 
     internal func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         if !peripheralManager.isAdvertising {
-            var advertisementData: [String: Any] = [ CBAdvertisementDataServiceUUIDsKey: _configuration.serviceUUIDs ]
+            var advertisementData: [String: Any] = [CBAdvertisementDataServiceUUIDsKey: _configuration.advertisedCBUUID]
             if let localName = _configuration.localName {
                 advertisementData[CBAdvertisementDataLocalNameKey] = localName
             }
