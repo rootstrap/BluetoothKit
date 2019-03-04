@@ -43,6 +43,15 @@ public protocol BKRemotePeripheralDelegate: class {
      */
     func remotePeripheralIsReady(_ remotePeripheral: BKRemotePeripheral)
 
+    /**
+    Called when insufficient authorization error received when trying to read a charateristic.
+    */
+    func remotePeripheralInsufficientAuthorization(_ remotePeripheral: BKRemotePeripheral, characteristic: CBCharacteristic)
+
+    /**
+    Called when peripheral is ready to send write without response.
+    */
+    func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) //TODO: check this
 }
 
 /**
@@ -106,7 +115,8 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         #endif
     }
 
-    internal var characteristicData: CBCharacteristic?
+  //TODO: check if this needed internal var characteristicsData: [BKCharacteristic] = []
+    internal var characteristicsData: [CBCharacteristic] = []
     internal var peripheral: CBPeripheral?
 
     private var peripheralDelegateProxy: BKCBPeripheralDelegateProxy!
@@ -119,7 +129,23 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         self.peripheral = peripheral
     }
 
+    // MARK: Public Functions
+
+    public func readCharacteristic(from service: CBUUID) {
+      if let characteristic = characteristicsData.first(where: { $0.service.uuid == service && isCharacteristicReadable($0) }) {
+            read(characteristic: characteristic)
+        }
+    }
+
     // MARK: Internal Functions
+
+    internal func isCharacteristicReadable(_ characteristic: CBCharacteristic) -> Bool { //TODO: check this
+        return characteristic.properties.contains(.read)
+    }
+
+    internal func read(characteristic: CBCharacteristic) {
+        peripheral?.readValue(for: characteristic)
+    }
 
     internal func prepareForConnection() {
         peripheral?.delegate = peripheralDelegateProxy
@@ -171,8 +197,21 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
           let bkService = configuration.services.first(where: { $0.serviceCBUUID == service.uuid }) else { return }
 
         //TODO: Save writable characteristics
+        bkService.writableCharacteristics.forEach { characteristic in
+          //TODO: check this
+          if let dataCharacteristic = service.characteristics?.first(where: { $0.uuid == characteristic }) {
+              characteristicsData.append(dataCharacteristic)
+          }
+        }
 
         //TODO: Save readable characteristics and setNotifyValue for them
+        bkService.readableCharacteristics.forEach { characteristic in
+        //TODO: check this
+            if let dataCharacteristic = service.characteristics?.first(where: { $0.uuid == characteristic }) {
+                characteristicsData.append(dataCharacteristic)
+                peripheral.setNotifyValue(true, for: dataCharacteristic)
+            }
+        }
 
         peripheralDelegate?.remotePeripheralIsReady(self)
     }
@@ -181,12 +220,20 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         guard error == nil, let value = characteristic.value else {
           if let error = error as NSError?,
               error.code == CBATTError.insufficientAuthorization.rawValue {
-              //TODO: Send InsufficientAuthorization error
+              peripheralDelegate?.remotePeripheralInsufficientAuthorization(self, characteristic: characteristic)
             }
             return
         }
 
         //TODO: Send information of which characteristic has been updated
         handleReceivedData(value)
+    }
+
+    internal func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        peripheralDelegate?.remotePeripheralIsReady(self)
+    }
+
+    internal func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        peripheralDelegate?.peripheralIsReady(toSendWriteWithoutResponse: peripheral)
     }
 }
