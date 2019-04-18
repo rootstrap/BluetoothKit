@@ -29,11 +29,13 @@ import Foundation
     - InterruptedByUnavailability(cause): Will be returned if Bluetooth ie. is turned off while performing an action.
     - FailedToConnectDueToTimeout: The time out elapsed while attempting to connect to a peripheral.
     - RemotePeerNotConnected: The action failed because the remote peer attempted to interact with, was not connected.
+    - GenericError: The action failed with a generic reason.
     - InternalError(underlyingError): Will be returned if any of the internal or private classes returns an unhandled error.
  */
 public enum BKError: Error {
     case interruptedByUnavailability(cause: BKUnavailabilityCause)
     case failedToConnectDueToTimeout
     case remotePeerNotConnected
+    case genericError(reason: String) //TODO: check
     case internalError(underlyingError: Error?)
 }

@@ -45,6 +45,16 @@ public protocol BKPeripheralDelegate: class {
 }
 
 /**
+ The peripheral's delegate is called when asynchronous events associated to the writing of a ca.
+ */
+public protocol BKPeripheralSendDelegate: class {
+    /**
+    Called when peripheral is ready to send write without response.
+    */
+    func remotePeripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) //TODO: check this
+}
+
+/**
     The class used to take the Bluetooth LE peripheral role. Peripherals can be discovered and connected to by centrals.
     One a central has connected, the peripheral can send data to it.
 */
@@ -182,7 +192,10 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         }
     }
 
-    internal override func sendData(_ data: Data, toRemotePeer remotePeer: BKRemotePeer) -> Bool {
+  internal override func sendData(_ data: Data,
+                                  inCharacteristic characteristicCBUUID: CBUUID,
+                                  underService serviceCBUUID: CBUUID,
+                                  toRemotePeer remotePeer: BKRemotePeer) -> Bool {
         guard let remoteCentral = remotePeer as? BKRemoteCentral else {
             return false
         }
@@ -275,7 +288,11 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
     }
 
     internal func peripheralManagerIsReadyToUpdateSubscribers(_ peripheral: CBPeripheralManager) {
-        processSendDataTasks()
+        _configuration.services.forEach { service in
+            service.writableCharacteristics.forEach { characteristic in
+                processSendDataTasks(inCharacteristic: characteristic,
+                                     underService: service.serviceCBUUID)
+            }
+        }
     }
-
 }

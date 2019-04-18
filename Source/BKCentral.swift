@@ -324,11 +324,14 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
             }
         }
     }
-
-    internal override func sendData(_ data: Data, toRemotePeer remotePeer: BKRemotePeer) -> Bool {
+  //TODO: check I think we don't need serviceCBUUID
+    internal override func sendData(_ data: Data,
+                                  inCharacteristic characteristicCBUUID: CBUUID,
+                                  underService serviceCBUUID: CBUUID,
+                                  toRemotePeer remotePeer: BKRemotePeer) -> Bool {
         guard let remotePeripheral = remotePeer as? BKRemotePeripheral,
                 let peripheral = remotePeripheral.peripheral,
-                let characteristic = remotePeripheral.characteristicData else {
+          let characteristic = (remotePeripheral.characteristicsData.first { $0.uuid == characteristicCBUUID }) else {
             return false
         }
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)

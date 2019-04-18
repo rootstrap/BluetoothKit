@@ -47,11 +47,6 @@ public protocol BKRemotePeripheralDelegate: class {
     Called when insufficient authorization error received when trying to read a charateristic.
     */
     func remotePeripheralInsufficientAuthorization(_ remotePeripheral: BKRemotePeripheral, characteristic: CBCharacteristic)
-
-    /**
-    Called when peripheral is ready to send write without response.
-    */
-    func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) //TODO: check this
 }
 
 /**
@@ -103,6 +98,8 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
 
     /// The remote peripheral's delegate.
     public weak var peripheralDelegate: BKRemotePeripheralDelegate?
+
+    public weak var sendDelegate: BKPeripheralSendDelegate? //TODO: check
 
     override internal var maximumUpdateValueLength: Int {
         guard #available(iOS 9, *), let peripheral = peripheral else {
@@ -234,6 +231,6 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
     }
 
     internal func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        peripheralDelegate?.peripheralIsReady(toSendWriteWithoutResponse: peripheral)
+        sendDelegate?.remotePeripheralIsReady(toSendWriteWithoutResponse: peripheral) //TODO: check
     }
 }
