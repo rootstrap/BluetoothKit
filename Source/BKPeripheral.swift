@@ -273,7 +273,8 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         }
     }
 
-    func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWriteRequests requests: [CBATTRequest]) {
+    func peripheralManager(_ peripheral: CBPeripheralManager,
+                           didReceiveWriteRequests requests: [CBATTRequest]) {
         for writeRequest in requests {
             guard writeRequest.characteristic.uuid == characteristicData.uuid else {
                 continue
@@ -283,7 +284,7 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
                   let data = writeRequest.value else {
                 continue
             }
-            remoteCentral.handleReceivedData(data)
+            remoteCentral.handleReceivedData(data, inCharacteristic: characteristicData.uuid)
         }
     }
 

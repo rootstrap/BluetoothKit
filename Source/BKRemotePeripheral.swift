@@ -213,7 +213,9 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         peripheralDelegate?.remotePeripheralIsReady(self)
     }
 
-    internal func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+    internal func peripheral(_ peripheral: CBPeripheral,
+                             didUpdateValueFor characteristic: CBCharacteristic,
+                             error: Error?) {
         guard error == nil, let value = characteristic.value else {
           if let error = error as NSError?,
               error.code == CBATTError.insufficientAuthorization.rawValue {
@@ -223,7 +225,7 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         }
 
         //TODO: Send information of which characteristic has been updated
-        handleReceivedData(value)
+        handleReceivedData(value, inCharacteristic: characteristic.uuid)
     }
 
     internal func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {

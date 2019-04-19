@@ -38,10 +38,7 @@ public class BKConfiguration {
     public var advertisedCBUUID: [CBUUID]
 
     /// Data used to indicate that no more data is coming when communicating.
-    public var endOfDataMark: Data
-
-    /// Data used to indicate that a transfer was cancellen when communicating.
-    public var dataCancelledMark: Data
+    public var endOfDataMark: Data?
 
     internal var serviceUUIDs: [CBUUID] {
         return services.map { $0.serviceCBUUID }
@@ -49,11 +46,12 @@ public class BKConfiguration {
 
     // MARK: Initialization
 
-    public init(services: [BKService], advertisedCBUUID: [CBUUID]) {
+    public init(services: [BKService],
+                advertisedCBUUID: [CBUUID],
+                endOfDataMark: String? = nil) {
         self.advertisedCBUUID = advertisedCBUUID
         self.services = services
-        endOfDataMark = "EOD".data(using: String.Encoding.utf8)!
-        dataCancelledMark = "COD".data(using: String.Encoding.utf8)!
+        self.endOfDataMark = endOfDataMark?.data(using: String.Encoding.utf8)
     }
 
     // MARK: Functions

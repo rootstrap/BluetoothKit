@@ -23,6 +23,7 @@
 //
 
 import Foundation
+import CoreBluetooth
 
 public protocol BKRemotePeerDelegate: class {
     /**
@@ -30,7 +31,9 @@ public protocol BKRemotePeerDelegate: class {
      - parameter remotePeripheral: The remote peripheral that sent the data.
      - parameter data: The data it sent.
      */
-    func remotePeer(_ remotePeer: BKRemotePeer, didSendArbitraryData data: Data)
+    func remotePeer(_ remotePeer: BKRemotePeer,
+                    didSendArbitraryData data: Data,
+                    inCharacteristic characteristic: CBUUID)
 }
 
 public func == (lhs: BKRemotePeer, rhs: BKRemotePeer) -> Bool {
@@ -55,19 +58,32 @@ public class BKRemotePeer: Equatable {
         return 20
     }
 
-    internal func handleReceivedData(_ receivedData: Data) {
-        if receivedData == configuration!.endOfDataMark {
+    internal func handleReceivedData(_ receivedData: Data,
+                                     inCharacteristic characteristic: CBUUID) {
+        if configuration?.endOfDataMark != nil {
+            handleDataPacket(receivedData, inCharacteristic: characteristic)
+        } else {
+            delegate?.remotePeer(self,
+                                 didSendArbitraryData: receivedData,
+                                 inCharacteristic: characteristic)
+        }
+    }
+
+    internal func handleDataPacket(_ receivedPacket: Data,
+                                   inCharacteristic characteristic: CBUUID) {
+        if receivedPacket == configuration!.endOfDataMark {
             if let finalData = data {
-                delegate?.remotePeer(self, didSendArbitraryData: finalData)
+                delegate?.remotePeer(self,
+                                     didSendArbitraryData: finalData,
+                                     inCharacteristic: characteristic)
             }
             data = nil
             return
         }
         if self.data != nil {
-            self.data?.append(receivedData)
+            self.data?.append(receivedPacket)
             return
         }
-        self.data = receivedData
+        self.data = receivedPacket
     }
-
 }
