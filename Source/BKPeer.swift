@@ -26,7 +26,6 @@ import Foundation
 import CoreBluetooth
 
 public typealias BKSendDataCompletionHandler = ((_ data: Data, _ remotePeer: BKRemotePeer, _ error: BKError?) -> Void)
-public typealias BKSendDataPacketCompletion = ((_ lastPacket: Bool) -> Void)
 
 public class BKPeer {
 
@@ -57,59 +56,63 @@ public class BKPeer {
     public func sendData(_ data: Data,
                          inCharacteristic characteristicCBUUID: CBUUID,
                          toRemotePeer remotePeer: BKRemotePeer,
+                         delay: Int = 0,
+                         bytesBetweenDelay: Int = 0,
                          completionHandler: BKSendDataCompletionHandler?) {
         guard connectedRemotePeers.contains(remotePeer) else {
             completionHandler?(data, remotePeer, BKError.remotePeerNotConnected)
             return
         }
-        guard let remotePeripheral = remotePeer as? BKRemotePeripheral else {
-          let genericError = BKError.genericError(reason: "Not able to send data")
-          completionHandler?(data, remotePeer, genericError)
-          return
-        }
 
-        remotePeripheral.sendDelegate = self
+        remotePeer.writeDelegate = self
         let sendDataTask = BKSendDataTask(data: data,
                                           inCharacteristic: characteristicCBUUID,
+                                          delay: delay,
+                                          bytesBetweenDelay: bytesBetweenDelay,
                                           destination: remotePeer,
                                           completionHandler: completionHandler)
         sendDataTasks.append(sendDataTask)
-        processSendDataTasks(inCharacteristic: characteristicCBUUID)
+        processSendDataTasks()
+    }
+  
+    internal func processDataForiOS11() -> Bool {
+        if #available(iOS 12, *) { return false }
+        if #available(iOS 11, *) { return true }
+        return false
     }
 
-    internal func processSendDataTasks(inCharacteristic characteristicCBUUID: CBUUID,
-                                       delay: Int = 0,
-                                       bytesBetweenDelay: Int = 0) {
+    internal func processSendDataTasks() {
         guard sendDataTasks.count > 0,
           let dataTask = sendDataTasks.first else { return }
 
-        if #available(iOS 11, *) {
-            //If iOS 11 or higher, delegate method to send next packet in data task will be called
-            sendPacket(withDataTask: dataTask,
-                       delay: delay,
-                       bytesBetweenDelay: bytesBetweenDelay,
-                       inCharacteristic: characteristicCBUUID)
+        if processDataForiOS11() {
+            //In iOS 11, delegate method to send next packet in data task is being called every time a packet is sent
+            _ = sendPacket(withDataTask: dataTask,
+                           delay: dataTask.delay,
+                           bytesBetweenDelay: dataTask.bytesBetweenDelay)
         } else {
-            //If iOS 10 or lower, we need to keep sending each packet of the data task manually
-            while !dataTask.sentAllData {
-                sendPacket(withDataTask: dataTask,
-                           delay: delay,
-                           bytesBetweenDelay: bytesBetweenDelay,
-                           inCharacteristic: characteristicCBUUID)
+            var sent = true
+            while !dataTask.sentAllData && sent {
+                //If iOS 10 or lower, canSendWriteWithoutResponse always true,
+                //If iOS 12 or higher and canSendWriteWithoutResponse false delegate method to send data in data task will be called when perpheral is ready
+                guard dataTask.destination.canSendWriteWithoutResponse else { return }
+            
+                sent = sendPacket(withDataTask: dataTask,
+                                  delay: dataTask.delay,
+                                  bytesBetweenDelay: dataTask.bytesBetweenDelay)
             }
         }
     }
 
     internal func sendPacket(withDataTask dataTask: BKSendDataTask,
                              delay: Int = 0,
-                             bytesBetweenDelay: Int = 0,
-                             inCharacteristic characteristic: CBUUID) {
+                             bytesBetweenDelay: Int = 0) -> Bool {
         let sendingError = BKError.internalError(underlyingError: NSError(domain: "Not able to send data",
                                                                           code: 0,
                                                                           userInfo: nil))
         guard let nextPayload = dataTask.nextPayload else {
             onSendingCompleted(withDataTask: dataTask, error: sendingError)
-            return
+            return false
         }
 
         //Adds a delay of delay (in ms) every bytesBetweenDelay sent
@@ -119,17 +122,18 @@ public class BKPeer {
         }
 
         let dataSent = sendData(nextPayload,
-                                inCharacteristic: characteristic,
+                                inCharacteristic: dataTask.characteristic,
                                 toRemotePeer: dataTask.destination)
         guard dataSent else {
             onSendingCompleted(withDataTask: dataTask, error: sendingError)
-            return
+            return false
         }
 
         dataTask.offset += nextPayload.count
         if dataTask.sentAllData {
             onSendingCompleted(withDataTask: dataTask)
         }
+        return true
     }
 
     internal func onSendingCompleted(withDataTask dataTask: BKSendDataTask,
@@ -156,11 +160,8 @@ public class BKPeer {
     }
 }
 
-extension BKPeer: BKPeripheralSendDelegate {
-    public func remotePeripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        if !sendDataTasks.isEmpty,
-          let characteristic = sendDataTasks.first?.characteristic {
-            processSendDataTasks(inCharacteristic: characteristic)
-        }
+extension BKPeer: BKPeripheralWriteDelegate {
+    public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        processSendDataTasks()
     }
 }

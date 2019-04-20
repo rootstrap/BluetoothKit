@@ -35,9 +35,11 @@ internal class BKSendDataTask: Equatable {
 
     internal let data: Data
     internal let destination: BKRemotePeer
-    internal let characteristic: CBUUID?
+    internal let characteristic: CBUUID
     internal let completionHandler: BKSendDataCompletionHandler?
     internal var offset = 0
+    internal var delay: Int = 0
+    internal var bytesBetweenDelay: Int = 0
 
     internal var maximumPayloadLength: Int {
         return destination.maximumUpdateValueLength
@@ -69,10 +71,14 @@ internal class BKSendDataTask: Equatable {
 
     internal init(data: Data,
                   inCharacteristic characteristicCBUUID: CBUUID,
+                  delay: Int = 0,
+                  bytesBetweenDelay: Int = 0,
                   destination: BKRemotePeer,
                   completionHandler: BKSendDataCompletionHandler?) {
         self.data = data
         characteristic = characteristicCBUUID
+        self.delay = delay
+        self.bytesBetweenDelay = bytesBetweenDelay
         self.destination = destination
         self.completionHandler = completionHandler
     }

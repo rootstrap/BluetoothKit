@@ -83,6 +83,9 @@ internal class BKCBPeripheralDelegateProxy: NSObject, CBPeripheralDelegate {
     }
 
     internal func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        //This method is invoked after a failed call to writeValue:forCharacteristic:type: when the peripheral is again ready to send characteristic value updates.
+      
+        //Not working properly in iOS 11. According to documents (https://asciiwwdc.com/2017/sessions/712), this should be called after a negative response from canSendWriteWithoutResponse, instead is getting called everytime writeValue:forCharacteristic:type: is being called in iOS 11
         delegate?.peripheralIsReady(toSendWriteWithoutResponse: peripheral)
     }
 }

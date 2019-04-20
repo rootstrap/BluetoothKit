@@ -44,11 +44,11 @@ public protocol BKPeripheralDelegate: class {
     func peripheral(_ peripheral: BKPeripheral, remoteCentralDidDisconnect remoteCentral: BKRemoteCentral)
 }
 
-public protocol BKPeripheralSendDelegate: class {
+public protocol BKPeripheralWriteDelegate: class {
     /**
-    Called when peripheral is ready to send write without response.
+    Called when peripheral is ready for write without response.
     */
-    func remotePeripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral)
+    func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral)
 }
 
 /**
@@ -285,10 +285,6 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
     }
 
     internal func peripheralManagerIsReadyToUpdateSubscribers(_ peripheral: CBPeripheralManager) {
-        _configuration.services.forEach { service in
-            service.writableCharacteristics.forEach { characteristic in
-                processSendDataTasks(inCharacteristic: characteristic)
-            }
-        }
+        processSendDataTasks()
     }
 }

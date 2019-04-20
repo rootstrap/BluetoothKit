@@ -46,6 +46,7 @@ public class BKRemotePeer: Equatable {
     public let identifier: UUID
 
     public weak var delegate: BKRemotePeerDelegate?
+    public weak var writeDelegate: BKPeripheralWriteDelegate?
 
     internal var configuration: BKConfiguration?
     private var data: Data?
@@ -56,6 +57,17 @@ public class BKRemotePeer: Equatable {
 
     internal var maximumUpdateValueLength: Int {
         return 20
+    }
+
+    public var canSendWriteWithoutResponse: Bool {
+        guard let remotePeripheral = self as? BKRemotePeripheral,
+            let peripheral = remotePeripheral.peripheral else {
+                return false
+        }
+        if #available(iOS 11.0, *) {
+            return peripheral.canSendWriteWithoutResponse
+        }
+        return true
     }
 
     internal func handleReceivedData(_ receivedData: Data,

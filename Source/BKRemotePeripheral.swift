@@ -98,7 +98,6 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
 
     /// The remote peripheral's delegate.
     public weak var peripheralDelegate: BKRemotePeripheralDelegate?
-    public weak var sendDelegate: BKPeripheralSendDelegate?
 
     override internal var maximumUpdateValueLength: Int {
         guard #available(iOS 9, *), let peripheral = peripheral else {
@@ -229,6 +228,6 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
     }
 
     internal func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        sendDelegate?.remotePeripheralIsReady(toSendWriteWithoutResponse: peripheral)
+        writeDelegate?.peripheralIsReady(toSendWriteWithoutResponse: peripheral)
     }
 }

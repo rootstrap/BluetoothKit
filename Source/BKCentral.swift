@@ -333,6 +333,7 @@ public class BKCentral: BKPeer, BKCBCentralManagerStateDelegate, BKConnectionPoo
             let characteristic = (remotePeripheral.characteristicsData.first { $0.uuid == characteristicCBUUID }) else {
                 return false
         }
+
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
         return true
     }
