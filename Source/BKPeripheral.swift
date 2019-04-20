@@ -44,14 +44,11 @@ public protocol BKPeripheralDelegate: class {
     func peripheral(_ peripheral: BKPeripheral, remoteCentralDidDisconnect remoteCentral: BKRemoteCentral)
 }
 
-/**
- The peripheral's delegate is called when asynchronous events associated to the writing of a ca.
- */
 public protocol BKPeripheralSendDelegate: class {
     /**
     Called when peripheral is ready to send write without response.
     */
-    func remotePeripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) //TODO: check this
+    func remotePeripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral)
 }
 
 /**
@@ -192,14 +189,13 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
         }
     }
 
-  internal override func sendData(_ data: Data,
+    internal override func sendData(_ data: Data,
                                   inCharacteristic characteristicCBUUID: CBUUID,
-                                  underService serviceCBUUID: CBUUID,
                                   toRemotePeer remotePeer: BKRemotePeer) -> Bool {
         guard let remoteCentral = remotePeer as? BKRemoteCentral else {
             return false
         }
-        return peripheralManager.updateValue(data, for: characteristicData, onSubscribedCentrals: [ remoteCentral.central ])
+        return peripheralManager.updateValue(data, for: characteristicData, onSubscribedCentrals: [remoteCentral.central])
     }
 
     private func handleDisconnectForRemoteCentral(_ remoteCentral: BKRemoteCentral) {
@@ -291,8 +287,7 @@ public class BKPeripheral: BKPeer, BKCBPeripheralManagerDelegate, BKAvailability
     internal func peripheralManagerIsReadyToUpdateSubscribers(_ peripheral: CBPeripheralManager) {
         _configuration.services.forEach { service in
             service.writableCharacteristics.forEach { characteristic in
-                processSendDataTasks(inCharacteristic: characteristic,
-                                     underService: service.serviceCBUUID)
+                processSendDataTasks(inCharacteristic: characteristic)
             }
         }
     }

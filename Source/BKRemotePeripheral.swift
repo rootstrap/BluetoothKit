@@ -98,8 +98,7 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
 
     /// The remote peripheral's delegate.
     public weak var peripheralDelegate: BKRemotePeripheralDelegate?
-
-    public weak var sendDelegate: BKPeripheralSendDelegate? //TODO: check
+    public weak var sendDelegate: BKPeripheralSendDelegate?
 
     override internal var maximumUpdateValueLength: Int {
         guard #available(iOS 9, *), let peripheral = peripheral else {
@@ -112,7 +111,6 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         #endif
     }
 
-  //TODO: check if this needed internal var characteristicsData: [BKCharacteristic] = []
     internal var characteristicsData: [CBCharacteristic] = []
     internal var peripheral: CBPeripheral?
 
@@ -136,7 +134,7 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
 
     // MARK: Internal Functions
 
-    internal func isCharacteristicReadable(_ characteristic: CBCharacteristic) -> Bool { //TODO: check this
+    internal func isCharacteristicReadable(_ characteristic: CBCharacteristic) -> Bool {
         return characteristic.properties.contains(.read)
     }
 
@@ -189,21 +187,19 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
         }
     }
 
-    internal func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+    internal func peripheral(_ peripheral: CBPeripheral,
+                             didDiscoverCharacteristicsFor service: CBService,
+                             error: Error?) {
         guard let configuration = configuration,
           let bkService = configuration.services.first(where: { $0.serviceCBUUID == service.uuid }) else { return }
 
-        //TODO: Save writable characteristics
         bkService.writableCharacteristics.forEach { characteristic in
-          //TODO: check this
-          if let dataCharacteristic = service.characteristics?.first(where: { $0.uuid == characteristic }) {
-              characteristicsData.append(dataCharacteristic)
-          }
+            if let dataCharacteristic = service.characteristics?.first(where: { $0.uuid == characteristic }) {
+                characteristicsData.append(dataCharacteristic)
+            }
         }
 
-        //TODO: Save readable characteristics and setNotifyValue for them
         bkService.readableCharacteristics.forEach { characteristic in
-        //TODO: check this
             if let dataCharacteristic = service.characteristics?.first(where: { $0.uuid == characteristic }) {
                 characteristicsData.append(dataCharacteristic)
                 peripheral.setNotifyValue(true, for: dataCharacteristic)
@@ -217,14 +213,14 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
                              didUpdateValueFor characteristic: CBCharacteristic,
                              error: Error?) {
         guard error == nil, let value = characteristic.value else {
-          if let error = error as NSError?,
+            if let error = error as NSError?,
               error.code == CBATTError.insufficientAuthorization.rawValue {
-              peripheralDelegate?.remotePeripheralInsufficientAuthorization(self, characteristic: characteristic)
+                peripheralDelegate?.remotePeripheralInsufficientAuthorization(self,
+                                                                              characteristic: characteristic)
             }
             return
         }
 
-        //TODO: Send information of which characteristic has been updated
         handleReceivedData(value, inCharacteristic: characteristic.uuid)
     }
 
@@ -233,6 +229,6 @@ public class BKRemotePeripheral: BKRemotePeer, BKCBPeripheralDelegate {
     }
 
     internal func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        sendDelegate?.remotePeripheralIsReady(toSendWriteWithoutResponse: peripheral) //TODO: check
+        sendDelegate?.remotePeripheralIsReady(toSendWriteWithoutResponse: peripheral)
     }
 }

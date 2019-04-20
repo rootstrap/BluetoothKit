@@ -36,6 +36,6 @@ public enum BKError: Error {
     case interruptedByUnavailability(cause: BKUnavailabilityCause)
     case failedToConnectDueToTimeout
     case remotePeerNotConnected
-    case genericError(reason: String) //TODO: check
+    case genericError(reason: String)
     case internalError(underlyingError: Error?)
 }
